@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Trevor.ScienceFair.CollidingPyramid
 {
-    public class CubeRoot_Unity : MonoBehaviour
+    public class CubeRoot_UnityPhysX : MonoBehaviour
     {
         public float secondsBeforeStart = 2f;
         public float secondsBeforeKill = 5f;
