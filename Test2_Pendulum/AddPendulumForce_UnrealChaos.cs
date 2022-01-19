@@ -14,8 +14,8 @@ namespace Game
 	/// </summary>
 	public class Main
 	{
-        public static int secondsBeforeStart = 5;
-        public static int secondsBeforeKill = 60;
+        public static int secondsBeforeStart = 1;
+        public static int secondsBeforeKill = 30;
 
         public static Vector3 force = new Vector3(300, 0, 0); // Given triple the force than Unity
         public static float xAxisPositionOffset = 50; // In cm, unlike Unity in meters
@@ -24,7 +24,7 @@ namespace Game
         private static bool hasInited;
         private static bool hasStarted;
         private static bool hasFinished;
-        
+
         private static bool hasHitFirstPoint;
         private static Stopwatch movementTimer;
         private static StaticMeshComponent sphereActor; // No direct access to the transform afaik
@@ -43,14 +43,14 @@ namespace Game
             // Init variables
             pendulumMovementTimings = new List<float>();
             movementTimer = new Stopwatch();
-            
+
             World.ForEachActor<Actor>(actor =>
             {
                 // Find the sphere, this isn't a good method but it works
                 if (actor.Name == "StaticMeshActor_2")
                     sphereActor = actor.GetComponent<StaticMeshComponent>();
             });
-            
+
             hasInited = true;
         }
 
@@ -66,18 +66,18 @@ namespace Game
         {
             // Disable physics
             sphereActor.SetSimulatePhysics(false);
-            
-            // Setup data for export
-            string finalData = "";
-            foreach (float val in pendulumMovementTimings)
-                finalData += $"{val}\n";
 
             // Write data to disk (hard-coded path because I don't think UnrealCLR has a method for getting the project path)
-            File.WriteAllText(@"D:\ScienceFair\UnrealChaos\Content\Test2\test2_data.txt", finalData);
-            
+            File.AppendAllText(@"D:\ScienceFair\UnrealChaos\Content\Test2\test2_data.txt", $"{pendulumMovementTimings.Average()}\n");
+
             // Log
             Debug.AddOnScreenMessage(0, 5, Color.Green, $"Successfully wrote {pendulumMovementTimings.Count} timings to file!");
             hasFinished = true;
+
+            // Reset?
+            var actor = World.GetActorByTag<Actor>("T1Controller");
+            var comp = actor.GetComponentByTag<SceneComponent>("T1ControllerBP");
+            comp.Invoke($"ReloadScene");
         }
 
         public static void OnWorldDuringPhysicsTick(float deltaTime)
@@ -93,12 +93,12 @@ namespace Game
                 StartSimulation();
                 timeCounter = 0;
             }
-            else if (timeCounter >= secondsBeforeKill && !hasFinished && (pendulumMovementTimings.Count - 1) % 2 == 0)
+            else if (pendulumMovementTimings.Count == 20 && !hasFinished)
                 KillSimulation();
 
             if (!hasStarted) return;
             sphereActor.GetLocation(ref refLocation);
-            
+
             if (refLocation.X >= xAxisPositionOffset && movingTowards == GoingTo.Left)
             {
                 // Setup timer if it's the first hit
@@ -109,7 +109,7 @@ namespace Game
                     movementTimer.Start();
                     return;
                 }
-                    
+
                 // Write data and restart timer
                 movementTimer.Stop();
                 pendulumMovementTimings.Add(movementTimer.ElapsedMilliseconds);

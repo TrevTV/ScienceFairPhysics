@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -9,6 +11,9 @@ namespace Trevor.ScienceFair.Pendulum
 {
     public class AddPendulumForce_UnityPhysX : MonoBehaviour
     {
+        public static int currentRun = 0;
+        public static int toRun = 20;
+
         public float secondsBeforeStart = 5f;
         public float secondsBeforeKill = 60f;
         
@@ -83,7 +88,7 @@ namespace Trevor.ScienceFair.Pendulum
             // Begin wait for KillCount
             Invoke(nameof(KillCount), secondsBeforeKill);
         }
-
+        
         public void KillCount() => StartCoroutine(CoKillCount());
 
         private IEnumerator CoKillCount()
@@ -95,17 +100,18 @@ namespace Trevor.ScienceFair.Pendulum
             // Stop timer and physics
             joint.connectedBody.isKinematic = true;
             movementTimer.Stop();
-            
-            // Setup data for export
-            string finalData = "";
-            foreach (float val in pendulumMovementTimings)
-                finalData += $"{val}\n";
 
             // Write data to disk
-            File.WriteAllText(Application.dataPath + "\\Test2\\test2_data.txt", finalData);
+            File.AppendAllText(Application.dataPath + "\\Test2\\test2_data.txt", $"{pendulumMovementTimings.Average()}\n");
             
             // Log
             Debug.Log($"Successfully wrote {pendulumMovementTimings.Count} timings to file!");
+
+            currentRun++;
+            if (currentRun != toRun)
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Test2");
+            else
+                Application.Quit();
         }
     }
 }
